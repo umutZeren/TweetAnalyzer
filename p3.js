@@ -14,55 +14,47 @@ let index=0;
     });
     await page.waitFor(2000);
     let resText=[]
-  
-    
-    // resText.push()
 
-    let res=[],time=[],timeText=[];
-    let jdata=[];
-        for (let i = 0; i < 3; i++) {
-            let js=await autoScroll(page).then(   console.log(i));
-            js["results"].forEach(element => {
-                res.push(element);
-            });
-            js["time"].forEach(element => {
-                time.push(element);
-            });
-            js["timeText"].forEach(element => {
-                time.push(element);
-            });
-            
-
+    let res=[],time=[],timeText=[],idx=[];
+        for ( let i = 0; i < 3; i++) {
+            let js=await autoScroll(page).then(console.log(i));
+            for(let z=0;z<js[0].length;z++)
+            {
+                res.push(js[0][z]);
+                time.push(js[1][z]);
+                timeText.push(js[2][z]);
+            } 
+         
         }
-        let idx=[];
-        console.log("res ", res);
 
         res = res.filter((x, i, a) => {
             if(a.indexOf(x) === i){idx.push(i);}
-           return  a.indexOf(x) === i;
-           // idx.push(i);
-        })
-        //console.log()        
-        console.log("filter ", res);
-        console.log("indexes", idx);
-
-
-    
+           return res[i];
+        });
+        //console.log("filter ", res);
+        finalJ={};
+        for(let a = 0; a < idx.length; a++){
+            finalJ[`${a}`] = 
+            {
+                "tweet": res[ idx[a]],
+                "time": time[idx[a]],
+                "timeText":timeText[idx[a]]
+            }   
+        }
+        console.log(finalJ);
     await browser.close();
 })();
 
 async function autoScroll(page)
 {
    let results = await page.$$eval('article div[lang]', (tweets) => tweets.map((tweet) => tweet.textContent));
-   let time =  await page.$$eval('article  time', (tweets) => tweets.map((tweet) => tweet.getAttribute('datetime').substring(0,5) ) );
+   let time =  await page.$$eval('article  time', (tweets) => tweets.map((tweet) => tweet.getAttribute('datetime').substring(0,4) ) );
    let timeText =  await page.$$eval('article  time[datetime]', (tweets) => tweets.map((tweet) => tweet.textContent ));
 
     await page.evaluate(async () => {
         await new Promise((resolve, reject, page) => {
             var totalHeight = 0;
             var distance = 200;
-            var array = [];
-
             var timer = setInterval((page) => {
 
                 var scrollHeight = document.body.scrollHeight;
@@ -100,7 +92,7 @@ async function autoScroll(page)
     ar.push(results);
    
 
-    return {"results":results,"time":time,"timeText":timeText};
+    return [results,time,timeText];
 
     //return resJ;
 }
