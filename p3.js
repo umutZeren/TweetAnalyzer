@@ -1,6 +1,7 @@
 
 const puppeteer = require('puppeteer');
-
+const ar=[];
+let index=0;
 (async () => {
     const browser = await puppeteer.launch({
         headless: false
@@ -16,22 +17,36 @@ const puppeteer = require('puppeteer');
   
     
     // resText.push()
-    let res=[];
-    for( i =0;i<5;i++)
-    {
-        let r= await autoScroll(page);
-        console.log(r);
-    }
-    //console.log(res);
-    //[(text,1)]
-    /*
-    res['results'].array.forEach((element,a) => {
-        
-        });*/
-          //  console.log(res['results']);
-            //const results = page.$$eval('article div[lang]', (tweets) => tweets.map((tweet) => tweet.textContent));
-           //onsole.log(results);
-        
+
+    let res=[],time=[],timeText=[];
+    let jdata=[];
+        for (let i = 0; i < 3; i++) {
+            let js=await autoScroll(page).then(   console.log(i));
+            js["results"].forEach(element => {
+                res.push(element);
+            });
+            js["time"].forEach(element => {
+                time.push(element);
+            });
+            js["timeText"].forEach(element => {
+                time.push(element);
+            });
+            
+
+        }
+        let idx=[];
+        console.log("res ", res);
+
+        res = res.filter((x, i, a) => {
+            if(a.indexOf(x) === i){idx.push(i);}
+           return  a.indexOf(x) === i;
+           // idx.push(i);
+        })
+        //console.log()        
+        console.log("filter ", res);
+        console.log("indexes", idx);
+
+
     
     await browser.close();
 })();
@@ -66,9 +81,10 @@ async function autoScroll(page)
         })
     });
     resJ={}
-    results.forEach(element => {
+    
+   /* results.forEach(element => {
         console.log(" whateva ", element);
-    });
+    })*/
     for( i=0;i<results.length;i++)
     {
        a={
@@ -76,10 +92,15 @@ async function autoScroll(page)
             "date" :time[i],
             "timeText":timeText[i]
         }
-        resJ[`tweet_${i}`]=a
+        resJ[`tweet_${index}`]=a
+        index++;
         
     }
     //console.log(resJ);
+    ar.push(results);
+   
+
     return {"results":results,"time":time,"timeText":timeText};
+
     //return resJ;
 }
