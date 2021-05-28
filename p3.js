@@ -1,52 +1,83 @@
-
+const fs = require('fs');
 const puppeteer = require('puppeteer');
-
+const ar = [];
+let index = 0;
 (async () => {
     const browser = await puppeteer.launch({
         headless: false
     });
     const page = await browser.newPage();
-    await page.goto('https://twitter.com/SpaceX/status/1388750333262761988');
+    await page.goto('https://twitter.com/elonmusk');
     await page.setViewport({
         width: 1200,
         height: 800
     });
     await page.waitFor(2000);
-    await autoScroll(page);
-    for (i = 0; i < 5; i++)
-    {
+    let resText = []
 
-        await autoScroll(page)
-            console.log("inside");
-            //const results = page.$$eval('article div[lang]', (tweets) => tweets.map((tweet) => tweet.textContent));
-           //onsole.log(results);
-        
+    let res = [], time = [], timeText = [], idx = [], retweet = [], likes = [], comments = [];
+    for (let i = 0; i < 300; i++) {
+        let js = await autoScroll(page).then(console.log(i));
+        for (let z = 0; z < js[0].length; z++) {
+            res.push(js[0][z]);
+     //       time.push(js[1][z]);
+            timeText.push(js[1][z]);
+            retweet.push(js[2][z]);
+            likes.push(js[3][z]);
+            comments.push(js[4][z]);
+        }
+
     }
 
-    //let results = await page.$$eval('article div[lang]', (tweets) => tweets.map((tweet) => tweet.textContent));
-    //array.push(result);
-    //console.log(results);
+    res = res.filter((x, i, a) => {
+        if (a.indexOf(x) === i) { idx.push(i); }
+        return res[i];
+    });
+    //console.log("filter ", res);
+    finalJ = [];
+    for (let a = 0; a < idx.length; a++) {
+        finalJ.push( 
+            {
+            "tweet": res[idx[a]],
+            "date": timeText[idx[a]],
+            "retweet": retweet[idx[a]],
+            "likes": likes[idx[a]],
+            "comments": comments[idx[a]]
+        }
+    )}
+    finalJ = JSON.stringify(finalJ);
+    process.stdout.write(finalJ);
+    fs.writeFile('Data.txt', finalJ, function (err) {
+        if (err) return console.log(err);
+        console.log('Hello World > helloworld.txt');
+    });
 
+    console.log(finalJ);
     await browser.close();
 })();
 
-async function autoScroll(page)
-{
-    let results = page.$$eval('article div[lang]', (tweets) => tweets.map((tweet) => tweet.textContent));
+async function autoScroll(page) {
+    let results = await page.$$eval('article div[lang]', (tweets) => tweets.map((tweet) => tweet.textContent));
+    let timeText = await page.$$eval('article  time[datetime]', (tweets) => tweets.map((tweet) => tweet.textContent));
+    let retweet = await page.$$eval('article div[data-testid="retweet"]', (tweets) => tweets.map((tweet) => tweet.textContent));
+    let likes = await page.$$eval('article div[data-testid="like"]', (tweets) => tweets.map((tweet) => tweet.textContent));
+    let comments = await page.$$eval('article div[data-testid="reply"]', (tweets) => tweets.map((tweet) => tweet.textContent));
+
     await page.evaluate(async () => {
         await new Promise((resolve, reject, page) => {
             var totalHeight = 0;
-            var distance = 1200;
-            var array = [];
-
-            var timer = setInterval(() => {
+            var distance = 200;
+            var timer = setInterval((page) => {
 
                 var scrollHeight = document.body.scrollHeight;
                 window.scrollBy(0, distance);
                 totalHeight += distance;
-                array.push("0");
-                if ((totalHeight > 1000)) {
-                    console.log("insied");
+                
+                console.log("th ", totalHeight);
+                if (totalHeight % 5000 == 0) {
+                    window.scrollBy(0, -2500);
+                }
+                if ((totalHeight > 3000)) {
                     //|| totalHeight >= scrollHeight) {
                     clearInterval(timer);
                     resolve(page);
@@ -54,7 +85,29 @@ async function autoScroll(page)
             }, 200);
         })
     });
-    console.log(results);
+    resJ = {}
+
+    /* results.forEach(element => {
+         console.log(" whateva ", element);
+     })*/
+    for (i = 0; i < results.length; i++) {
+        a = {
+            "tweet": results[i],
+            "date": timeText[i],
+            "retweet": retweet[i],
+            "likes": likes[i],
+            "comments": comments[i]
+
+        }
+        resJ[`tweet_${index}`] = a
+        index++;
+
+    }
+    //console.log(resJ);
+    ar.push(results);
 
 
+    return [results, timeText, retweet, likes, comments];
+
+    //return resJ;
 }
